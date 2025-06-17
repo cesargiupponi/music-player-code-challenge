@@ -40,27 +40,31 @@ struct SongsView: View {
                 Color.black.ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 20) {
-                    List(songs, id: \.id) { song in
-                        HStack(spacing: 16) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(white: 0.15))
-                                    .frame(width: 48, height: 48)
-                                Image(systemName: "music.note")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 24))
-                            }
+                    List(songs) { song in
+                        NavigationLink {
+                            SongsPlayerView()
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(white: 0.15))
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "music.note")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 24))
+                                }
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(song.title)
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 18, weight: .medium))
-                                Text(song.artist)
-                                    .foregroundColor(.gray)
-                                    .font(.system(size: 14))
-                            }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(song.title)
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 18, weight: .medium))
+                                    Text(song.artist)
+                                        .foregroundColor(.gray)
+                                        .font(.system(size: 14))
+                                }
 
-                            Spacer()
+                                Spacer()
+                            }
                         }
                         .listRowBackground(Color.black)
                     }
