@@ -46,12 +46,8 @@ struct SongsView: View {
                         } label: {
                             HStack(spacing: 16) {
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(white: 0.15))
-                                        .frame(width: 48, height: 48)
-                                    Image(systemName: "music.note")
+                                    Image(.songIconSmall)
                                         .foregroundColor(.white)
-                                        .font(.system(size: 24))
                                 }
 
                                 VStack(alignment: .leading, spacing: 2) {

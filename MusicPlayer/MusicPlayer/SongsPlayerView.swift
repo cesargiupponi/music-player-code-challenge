@@ -10,25 +10,34 @@ import SwiftUI
 struct SongsPlayerView: View {
 
     @State private var progress: Double = 0.0
+    @State private var bottomSheetHeight: CGFloat = .zero
+    @State private var isShowingBottomSheet = false
     @Environment(\.presentationMode) var presentationMode
     
+
     var body: some View {
         ZStack {
+
             Color.black.edgesIgnoringSafeArea(.all)
 
             VStack {
 
                 HStack {
-                    Image(.leftAction)
-                        .foregroundColor(.white)
-                        .font(.title2)
-                        .onTapGesture {
-                            presentationMode.wrappedValue.dismiss()
-                        }
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(.leftAction)
+                            .foregroundColor(.white)
+                            .font(.title2)
+                    }
                     Spacer()
-                    Image(.moreOptions)
-                        .foregroundColor(.white)
-                        .font(.title2)
+                    Button(action: {
+                        isShowingBottomSheet.toggle()
+                    }) {
+                        Image(.moreOptions)
+                            .foregroundColor(.white)
+                            .font(.title2)
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 20)
@@ -36,10 +45,7 @@ struct SongsPlayerView: View {
                 Spacer()
 
                 ZStack {
-                    Image(.songIcon)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200, height: 200)
+                    Image(.songIconBig)
                 }
                 .padding(.bottom, 40)
 
@@ -98,6 +104,19 @@ struct SongsPlayerView: View {
             }
         }
         .navigationBarBackButtonHidden()
+        .sheet(isPresented: $isShowingBottomSheet) {
+            MoreOptionsBottomSheet()
+            .overlay {
+                GeometryReader { geometry in
+                    Color.clear.preference(key: InnerHeightPreferenceKey.self, value: geometry.size.height)
+                }
+            }
+            .onPreferenceChange(InnerHeightPreferenceKey.self) { newHeight in
+                bottomSheetHeight = newHeight
+            }
+            .presentationDetents([.height(bottomSheetHeight)])
+            .presentationDragIndicator(.visible)
+        }
     }
 }
 
