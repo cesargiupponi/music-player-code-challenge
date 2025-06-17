@@ -9,11 +9,12 @@ import SwiftUI
 
 struct SongsPlayerView: View {
 
+    @Environment(\.presentationMode) var presentationMode
+
     @State private var progress: Double = 0.0
     @State private var bottomSheetHeight: CGFloat = .zero
     @State private var isShowingBottomSheet = false
-    @Environment(\.presentationMode) var presentationMode
-    
+    @State private var showAlbum = false
 
     var body: some View {
         ZStack {
@@ -27,7 +28,7 @@ struct SongsPlayerView: View {
                         presentationMode.wrappedValue.dismiss()
                     }) {
                         Image(.leftAction)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.white)
                             .font(.title2)
                     }
                     Spacer()
@@ -35,7 +36,7 @@ struct SongsPlayerView: View {
                         isShowingBottomSheet.toggle()
                     }) {
                         Image(.moreOptions)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.white)
                             .font(.title2)
                     }
                 }
@@ -55,10 +56,10 @@ struct SongsPlayerView: View {
                     Text("Something")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundStyle(Color.white)
                     Text("Artist")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Color.gray)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
@@ -69,11 +70,11 @@ struct SongsPlayerView: View {
                     HStack {
                         Text("0:00")
                             .font(.caption)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.white)
                         Spacer()
                         Text("-3:20")
                             .font(.caption)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.white)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -82,7 +83,7 @@ struct SongsPlayerView: View {
                     Button(action: {}) {
                         Image(.backward)
                             .font(.title)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.white)
                     }
                     Button(action: {}) {
                         ZStack {
@@ -91,13 +92,15 @@ struct SongsPlayerView: View {
                                 .frame(width: 60, height: 60)
                             Image(.playResume)
                                 .font(.title)
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.black)
                         }
                     }
-                    Button(action: {}) {
+                    Button(action: {
+
+                    }) {
                         Image(.forward)
                             .font(.title)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Color.white)
                     }
                 }
                 .padding(.top, 20)
@@ -105,7 +108,9 @@ struct SongsPlayerView: View {
         }
         .navigationBarBackButtonHidden()
         .sheet(isPresented: $isShowingBottomSheet) {
-            MoreOptionsBottomSheet()
+            MoreOptionsBottomSheet(onOpenAlbum: {
+                showAlbum = true
+            })
             .overlay {
                 GeometryReader { geometry in
                     Color.clear.preference(key: InnerHeightPreferenceKey.self, value: geometry.size.height)
@@ -116,6 +121,10 @@ struct SongsPlayerView: View {
             }
             .presentationDetents([.height(bottomSheetHeight)])
             .presentationDragIndicator(.visible)
+            .sheet(isPresented: $showAlbum) {
+                AlbumView()
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 }

@@ -47,15 +47,15 @@ struct SongsView: View {
                             HStack(spacing: 16) {
                                 ZStack {
                                     Image(.songIconSmall)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.white)
                                 }
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(song.title)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(Color.white)
                                         .font(.system(size: 18, weight: .medium))
                                     Text(song.artist)
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(Color.gray)
                                         .font(.system(size: 14))
                                 }
 
