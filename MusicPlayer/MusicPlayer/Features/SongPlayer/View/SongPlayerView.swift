@@ -18,8 +18,8 @@ struct SongPlayerView: View {
 
     @StateObject private var viewModel: SongPlayerViewModel
 
-    init(viewModel: SongPlayerViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
+    init(song: Song) {
+        _viewModel = StateObject(wrappedValue: SongPlayerViewModel(song: song))
     }
 
     var body: some View {
@@ -114,7 +114,10 @@ struct SongPlayerView: View {
         }
         .navigationBarBackButtonHidden()
         .sheet(isPresented: $isShowingBottomSheet) {
-            MoreOptionsBottomSheet(onOpenAlbum: {
+            let songBottomSheet = SongBottomSheet(title: viewModel.song.trackName,
+                                                  artist: viewModel.song.artistName,
+                                                  collectionId: viewModel.song.collectionId)
+            MoreOptionsBottomSheet(song: songBottomSheet, onOpenAlbum: {
                 showAlbum = true
             })
             .overlay {
@@ -166,18 +169,18 @@ struct SmallThumbSlider: View {
 }
 
 #Preview {
-    SongPlayerView(viewModel: SongPlayerViewModel(song: Song(trackId: 1,
-                                                             collectionId: 1234,
-                                                             artistName: "Artist",
-                                                             collectionName: "Collection",
-                                                             trackName: "Track",
-                                                             artworkUrl60: "",
-                                                             artworkUrl100: "",
-                                                             previewUrl: "",
-                                                             trackViewUrl: "",
-                                                             artistViewUrl: "",
-                                                             collectionViewUrl: "",
-                                                             primaryGenreName: "Genre",
-                                                             trackTimeMillis: 120))
+    SongPlayerView(song: Song(trackId: 1,
+                              collectionId: 1234,
+                              artistName: "Artist",
+                              collectionName: "Collection",
+                              trackName: "Track",
+                              artworkUrl60: "",
+                              artworkUrl100: "",
+                              previewUrl: "",
+                              trackViewUrl: "",
+                              artistViewUrl: "",
+                              collectionViewUrl: "",
+                              primaryGenreName: "Genre",
+                              trackTimeMillis: 120)
     )
 }

@@ -9,17 +9,23 @@ import SwiftUI
 
 struct MoreOptionsBottomSheet: View {
 
+    @StateObject private var viewModel: MoreOptionsViewModel
     var onOpenAlbum: () -> Void
 
-    var body: some View {
+    init(song: SongBottomSheet,
+         onOpenAlbum: @escaping () -> Void) {
+        self.onOpenAlbum = onOpenAlbum
+        _viewModel = StateObject(wrappedValue: MoreOptionsViewModel(song: song))
+    }
 
+    var body: some View {
         VStack(spacing: 24) {
             VStack(spacing: 12) {
-                Text("Something")
+                Text(viewModel.song.title)
                     .font(.system(size: 18))
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.white)
-                Text("Artist")
+                Text(viewModel.song.artist)
                     .font(.system(size: 14))
                     .foregroundStyle(Color.gray)
             }
@@ -51,7 +57,13 @@ struct InnerHeightPreferenceKey: PreferenceKey {
     }
 }
 
-
 #Preview {
-    MoreOptionsBottomSheet(onOpenAlbum: {})
+    MoreOptionsBottomSheet(
+        song: SongBottomSheet(
+            title: "Something",
+            artist: "Artist",
+            collectionId: 123
+        ),
+        onOpenAlbum: {}
+    )
 }
