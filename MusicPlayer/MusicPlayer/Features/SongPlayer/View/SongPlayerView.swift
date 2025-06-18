@@ -172,15 +172,7 @@ struct SmallThumbSlider: View {
     SongPlayerView(song: Song(trackId: 1,
                               collectionId: 1234,
                               artistName: "Artist",
-                              collectionName: "Collection",
                               trackName: "Track",
-                              artworkUrl60: "",
-                              artworkUrl100: "",
-                              previewUrl: "",
-                              trackViewUrl: "",
-                              artistViewUrl: "",
-                              collectionViewUrl: "",
-                              primaryGenreName: "Genre",
                               trackTimeMillis: 120)
     )
 }
