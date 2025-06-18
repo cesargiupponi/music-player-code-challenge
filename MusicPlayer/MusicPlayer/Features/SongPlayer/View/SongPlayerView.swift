@@ -1,5 +1,5 @@
 //
-//  SongsPlayerView.swift
+//  SongPlayerView.swift
 //  MusicPlayer
 //
 //  Created by Cesar Giupponi on 17/06/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SongsPlayerView: View {
+struct SongPlayerView: View {
 
     @Environment(\.presentationMode) var presentationMode
 
@@ -15,6 +15,12 @@ struct SongsPlayerView: View {
     @State private var bottomSheetHeight: CGFloat = .zero
     @State private var isShowingBottomSheet = false
     @State private var showAlbum = false
+
+    @StateObject private var viewModel: SongPlayerViewModel
+
+    init(viewModel: SongPlayerViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         ZStack {
@@ -53,11 +59,11 @@ struct SongsPlayerView: View {
                 Spacer()
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Something")
+                    Text(viewModel.song.trackName)
                         .font(.title2)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.white)
-                    Text("Artist")
+                    Text(viewModel.song.artistName)
                         .font(.subheadline)
                         .foregroundStyle(Color.gray)
                 }
@@ -72,7 +78,7 @@ struct SongsPlayerView: View {
                             .font(.caption)
                             .foregroundStyle(Color.white)
                         Spacer()
-                        Text("-3:20")
+                        Text(viewModel.trackDuration.convertToTime())
                             .font(.caption)
                             .foregroundStyle(Color.white)
                     }
@@ -121,10 +127,10 @@ struct SongsPlayerView: View {
             }
             .presentationDetents([.height(bottomSheetHeight)])
             .presentationDragIndicator(.visible)
-            .sheet(isPresented: $showAlbum) {
-                AlbumView()
-                    .presentationDragIndicator(.visible)
-            }
+//            .sheet(isPresented: $showAlbum) {
+//                AlbumView()
+//                    .presentationDragIndicator(.visible)
+//            }
         }
     }
 }
@@ -160,5 +166,16 @@ struct SmallThumbSlider: View {
 }
 
 #Preview {
-    SongsPlayerView()
+    SongPlayerView(viewModel: SongPlayerViewModel(song: Song(trackId: 1, artistName: "Artist",
+                                                               collectionName: "Collection",
+                                                               trackName: "Track",
+                                                               artworkUrl60: "",
+                                                               artworkUrl100: "",
+                                                               previewUrl: "",
+                                                               trackViewUrl: "",
+                                                               artistViewUrl: "",
+                                                               collectionViewUrl: "",
+                                                               primaryGenreName: "Genre",
+                                                               trackTimeMillis: 120))
+    )
 }
