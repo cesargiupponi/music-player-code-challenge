@@ -127,10 +127,10 @@ struct SongPlayerView: View {
             }
             .presentationDetents([.height(bottomSheetHeight)])
             .presentationDragIndicator(.visible)
-//            .sheet(isPresented: $showAlbum) {
-//                AlbumView()
-//                    .presentationDragIndicator(.visible)
-//            }
+            .sheet(isPresented: $showAlbum) {
+                AlbumView(collectionId: viewModel.song.collectionId)
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 }
@@ -166,16 +166,18 @@ struct SmallThumbSlider: View {
 }
 
 #Preview {
-    SongPlayerView(viewModel: SongPlayerViewModel(song: Song(trackId: 1, artistName: "Artist",
-                                                               collectionName: "Collection",
-                                                               trackName: "Track",
-                                                               artworkUrl60: "",
-                                                               artworkUrl100: "",
-                                                               previewUrl: "",
-                                                               trackViewUrl: "",
-                                                               artistViewUrl: "",
-                                                               collectionViewUrl: "",
-                                                               primaryGenreName: "Genre",
-                                                               trackTimeMillis: 120))
+    SongPlayerView(viewModel: SongPlayerViewModel(song: Song(trackId: 1,
+                                                             collectionId: 1234,
+                                                             artistName: "Artist",
+                                                             collectionName: "Collection",
+                                                             trackName: "Track",
+                                                             artworkUrl60: "",
+                                                             artworkUrl100: "",
+                                                             previewUrl: "",
+                                                             trackViewUrl: "",
+                                                             artistViewUrl: "",
+                                                             collectionViewUrl: "",
+                                                             primaryGenreName: "Genre",
+                                                             trackTimeMillis: 120))
     )
 }

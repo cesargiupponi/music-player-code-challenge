@@ -1,17 +1,24 @@
 //
-//  Song.swift
+//  Album.swift
 //  MusicPlayer
 //
 //  Created by Cesar Giupponi on 18/06/25.
 //
 
-struct Song: Identifiable, Decodable {
-    var id: Int { trackId }
-    let trackId: Int
-    let collectionId: Int
+import Foundation
+
+struct AlbumResponse: Decodable {
+    let results: [AlbumSong]
+}
+
+struct AlbumSong: Identifiable, Decodable {
+    var id: Int { trackId ?? 0 }
+    let wrapperType: String?
+    let collectionName: String?
+    let trackName: String?
     let artistName: String
-    let collectionName: String
-    let trackName: String
+    let trackId: Int?
+    let collectionId: Int?
     let artworkUrl60: String?
     let artworkUrl100: String?
     let previewUrl: String?
@@ -20,9 +27,4 @@ struct Song: Identifiable, Decodable {
     let collectionViewUrl: String?
     let primaryGenreName: String?
     let trackTimeMillis: Int?
-}
-
-struct SongsResponse: Decodable {
-    let resultCount: Int
-    let results: [Song]
 }

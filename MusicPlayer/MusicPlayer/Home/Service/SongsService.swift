@@ -12,11 +12,6 @@ protocol SongsServiceProtocol {
     func fetchSongs(query: String, limit: Int) -> AnyPublisher<SongsResponse, Error>
 }
 
-struct SongsResponse: Decodable {
-    let resultCount: Int
-    let results: [Song]
-}
-
 final class SongsService: SongsServiceProtocol {
     func fetchSongs(query: String, limit: Int) -> AnyPublisher<SongsResponse, Error> {
         var components = URLComponents(string: "https://itunes.apple.com/search")!
