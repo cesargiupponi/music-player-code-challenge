@@ -78,4 +78,119 @@ final class SongPlayerViewModelTests: XCTestCase {
         
         wait(for: [expectation], timeout: 1.0)
     }
-} 
+    
+    func test_init_withPlaylist_shouldSetCurrentSong() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        let currentSong = Song.mock2
+        
+        // When
+        sut = SongPlayerViewModel(song: currentSong, playlist: songs)
+        
+        // Then
+        XCTAssertEqual(sut.song.trackId, currentSong.trackId)
+        XCTAssertTrue(sut.hasNext)
+        XCTAssertTrue(sut.hasPrevious)
+    }
+    
+    func test_next_shouldAdvanceToNextSong() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock, playlist: songs)
+        
+        // When
+        sut.next()
+        
+        // Then
+        XCTAssertEqual(sut.song.trackId, Song.mock2.trackId)
+        XCTAssertTrue(sut.hasNext)
+        XCTAssertTrue(sut.hasPrevious)
+    }
+    
+    func test_next_atEndOfPlaylist_shouldNotAdvance() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock3, playlist: songs)
+        
+        // When
+        sut.next()
+        
+        // Then
+        XCTAssertEqual(sut.song.trackId, Song.mock3.trackId) // Should stay the same
+        XCTAssertFalse(sut.hasNext)
+        XCTAssertTrue(sut.hasPrevious)
+    }
+    
+    func test_previous_shouldGoToPreviousSong() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock3, playlist: songs)
+        
+        // When
+        sut.previous()
+        
+        // Then
+        XCTAssertEqual(sut.song.trackId, Song.mock2.trackId)
+        XCTAssertTrue(sut.hasNext)
+        XCTAssertTrue(sut.hasPrevious)
+    }
+    
+    func test_previous_atBeginningOfPlaylist_shouldNotGoBack() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock, playlist: songs)
+        
+        // When
+        sut.previous()
+        
+        // Then
+        XCTAssertEqual(sut.song.trackId, Song.mock.trackId) // Should stay the same
+        XCTAssertTrue(sut.hasNext)
+        XCTAssertFalse(sut.hasPrevious)
+    }
+    
+    func test_hasNext_withMultipleSongs_shouldReturnTrue() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock, playlist: songs)
+        
+        // When & Then
+        XCTAssertTrue(sut.hasNext)
+    }
+    
+    func test_hasPrevious_withMultipleSongs_shouldReturnTrue() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock2, playlist: songs)
+        
+        // When & Then
+        XCTAssertTrue(sut.hasPrevious)
+    }
+    
+    func test_hasNext_atLastSong_shouldReturnFalse() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock3, playlist: songs)
+        
+        // When & Then
+        XCTAssertFalse(sut.hasNext)
+    }
+    
+    func test_hasPrevious_atFirstSong_shouldReturnFalse() {
+        
+        // Given
+        let songs = [Song.mock, Song.mock2, Song.mock3]
+        sut = SongPlayerViewModel(song: Song.mock, playlist: songs)
+        
+        // When & Then
+        XCTAssertFalse(sut.hasPrevious)
+    }
+}

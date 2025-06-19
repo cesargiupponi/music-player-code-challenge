@@ -10,18 +10,14 @@ import SwiftUI
 struct SongPlayerView: View {
 
     @Environment(\.presentationMode) var presentationMode
-
+    @StateObject private var viewModel: SongPlayerViewModel
+    
     @State private var progress: Double = 0.0
     @State private var bottomSheetHeight: CGFloat = .zero
     @State private var isShowingBottomSheet = false
     @State private var showAlbum = false
 
-    @StateObject private var viewModel: SongPlayerViewModel
-
-    var playlist: [Song]
-
     init(song: Song, playlist: [Song]) {
-        self.playlist = playlist
         _viewModel = StateObject(wrappedValue: SongPlayerViewModel(song: song, playlist: playlist))
     }
 
@@ -94,8 +90,9 @@ struct SongPlayerView: View {
                     }) {
                         Image(.backward)
                             .font(.title)
-                            .foregroundStyle(Color.white)
                     }
+                    .disabled(!viewModel.hasPrevious)
+                    
                     Button(action: {}) {
                         ZStack {
                             Circle()
@@ -103,7 +100,6 @@ struct SongPlayerView: View {
                                 .frame(width: 60, height: 60)
                             Image(.playResume)
                                 .font(.title)
-                                .foregroundStyle(Color.black)
                         }
                     }
                     
@@ -112,16 +108,13 @@ struct SongPlayerView: View {
                     }) {
                         Image(.forward)
                             .font(.title)
-                            .foregroundStyle(Color.white)
                     }
+                    .disabled(!viewModel.hasNext)
                 }
                 .padding(.top, 20)
             }
         }
         .navigationBarBackButtonHidden()
-        .onAppear {
-            viewModel.setupPlaylist()
-        }
         .sheet(isPresented: $isShowingBottomSheet) {
             let songBottomSheet = SongBottomSheet(title: viewModel.song.trackName,
                                                   artist: viewModel.song.artistName,

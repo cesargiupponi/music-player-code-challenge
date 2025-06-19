@@ -10,24 +10,25 @@ import Combine
 
 @MainActor
 final class MusicPlayerManager: ObservableObject {
-
     static let shared = MusicPlayerManager()
-
+    
     @Published private(set) var currentSong: Song?
     @Published private(set) var playlist: [Song] = []
     @Published private(set) var currentIndex: Int = -1
     
     private init() {}
     
-    func setPlaylist(_ songs: [Song]) {
+    func setPlaylist(_ songs: [Song], startingFrom song: Song? = nil) {
         playlist = songs
-        currentIndex = min(0, songs.count - 1)
-        if !songs.isEmpty && currentIndex >= 0 {
-            currentSong = songs[currentIndex]
+        
+        if let song = song, let index = songs.firstIndex(where: { $0.trackId == song.trackId }) {
+            currentIndex = index
+            currentSong = songs[index]
+        } else {
+            currentIndex = 0
+            currentSong = songs.first
         }
     }
-    
-    // MARK: - Navigation Controls
     
     func next() {
         guard !playlist.isEmpty else { return }

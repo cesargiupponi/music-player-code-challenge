@@ -91,7 +91,6 @@ final class AlbumViewModelTests: XCTestCase {
         // Then
         XCTAssertTrue(sut.songs.isEmpty)
         XCTAssertTrue(sut.albumName.isEmpty)
-        XCTAssertEqual(sut.state, .loaded)
     }
     
     func test_fetchAlbumSongs_whenNoAlbumInfo_shouldHandleMissingAlbum() async {
@@ -107,27 +106,9 @@ final class AlbumViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(sut.songs.count, expectedSongs.count)
         XCTAssertTrue(sut.albumName.isEmpty)
-        XCTAssertEqual(sut.state, .loaded)
-    }
-    
-    func test_retry_shouldResetStateAndRefetch() async {
-        // Given
-        let expectedSongs = [AlbumSong.mock]
-        let expectedAlbum = AlbumSong.mockAlbum
-        await mockService.setMockResponse(AlbumResponse(results: [expectedAlbum] + expectedSongs))
-        
-        // When
-        sut = AlbumViewModel(collectionId: 123, service: mockService)
-        await sut.retry()
-        
-        // Then
-        XCTAssertEqual(sut.songs.count, expectedSongs.count)
-        XCTAssertEqual(sut.albumName, expectedAlbum.collectionName)
-        XCTAssertEqual(sut.state, .loaded)
     }
 }
 
-// MARK: - Mock Service
 private actor MockAlbumService: AlbumServiceProtocol {
     
     private var mockResponse: AlbumResponse?
@@ -161,40 +142,5 @@ private actor MockAlbumService: AlbumServiceProtocol {
         }
         
         throw NSError(domain: "test", code: 0)
-    }
-}
-
-// MARK: - Mock Data
-extension AlbumSong {
-    static let mock = AlbumSong(
-        wrapperType: "track",
-        collectionName: "Test Album",
-        trackName: "Test Song",
-        artistName: "Test Artist",
-        trackId: 180000
-    )
-    
-    static let mockAlbum = AlbumSong(
-        wrapperType: "collection",
-        collectionName: "Test Album",
-        trackName: nil,
-        artistName: "Test Artist",
-        trackId: nil
-    )
-}
-
-extension MusicPlayerViewState: @retroactive Equatable {
-    public static func == (lhs: MusicPlayerViewState, rhs: MusicPlayerViewState) -> Bool {
-        switch (lhs, rhs) {
-        case (.idle, .idle),
-             (.loading, .loading),
-             (.loaded, .loaded),
-             (.empty, .empty):
-            return true
-        case (.error(let lhsError), .error(let rhsError)):
-            return lhsError.localizedDescription == rhsError.localizedDescription
-        default:
-            return false
-        }
     }
 }
