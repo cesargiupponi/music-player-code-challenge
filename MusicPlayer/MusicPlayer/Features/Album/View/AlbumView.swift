@@ -1,3 +1,10 @@
+//
+//  AlbumView.swift
+//  MusicPlayer
+//
+//  Created by Cesar Giupponi on 18/06/25.
+//
+
 import SwiftUI
 
 struct AlbumView: View {

@@ -1,3 +1,10 @@
+//
+//  SongPlayerViewModel.swift
+//  MusicPlayer
+//
+//  Created by Cesar Giupponi on 17/06/25.
+//
+
 import Foundation
 import Combine
 
