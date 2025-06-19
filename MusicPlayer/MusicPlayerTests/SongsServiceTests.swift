@@ -6,113 +6,131 @@
 //
 
 import XCTest
-import Combine
 @testable import MusicPlayer
 
 final class SongsServiceTests: XCTestCase {
 
     private var sut: SongsService!
-    private var cancellables: Set<AnyCancellable>!
+    private let timeout: TimeInterval = 1.0
     
     override func setUp() {
         super.setUp()
         sut = SongsService()
-        cancellables = []
     }
     
     override func tearDown() {
         sut = nil
-        cancellables = nil
         super.tearDown()
     }
     
-    func test_fetchSongs_whenEmptyQuery_shouldUseDefaultQuery() {
+    func test_fetchSongs_whenEmptyQuery_shouldUseDefaultQuery() async throws {
+
         // Given
-        let expectation = XCTestExpectation(description: "Fetch with empty query")
+        let query = ""
+        let limit = 20
         
         // When
-        sut.fetchSongs(query: "", limit: 20)
-            .sink(receiveCompletion: { completion in
-                if case .failure = completion {
-                    XCTFail("Should not fail")
-                }
-            }, receiveValue: { response in
-                // Then
-                XCTAssertNotNil(response)
-                expectation.fulfill()
-            })
-            .store(in: &cancellables)
+        let response = try await sut.fetchSongs(query: query, limit: limit)
         
-        wait(for: [expectation], timeout: 5.0)
+        // Then
+        XCTAssertNotNil(response)
     }
     
-    func test_fetchSongs_whenValidQuery_shouldReturnResults() {
+    func test_fetchSongs_whenValidQuery_shouldReturnResults() async throws {
+
         // Given
-        let expectation = XCTestExpectation(description: "Fetch with valid query")
         let query = "Taylor Swift"
+        let limit = 20
         
         // When
-        sut.fetchSongs(query: query, limit: 20)
-            .sink(receiveCompletion: { completion in
-                if case .failure = completion {
-                    XCTFail("Should not fail")
-                }
-            }, receiveValue: { response in
-                // Then
-                XCTAssertNotNil(response)
-                XCTAssertFalse(response.results.isEmpty)
-                expectation.fulfill()
-            })
-            .store(in: &cancellables)
+        let response = try await sut.fetchSongs(query: query, limit: limit)
         
-        wait(for: [expectation], timeout: 5.0)
+        // Then
+        XCTAssertNotNil(response)
+        XCTAssertFalse(response.results.isEmpty)
     }
     
-    func test_fetchSongs_whenInvalidURL_shouldFail() {
+    func test_fetchSongs_whenInvalidURL_shouldFail() async {
+
         // Given
-        let expectation = XCTestExpectation(description: "Fetch with invalid URL")
         let mockService = MockSongsService()
-        mockService.shouldReturnInvalidURL = true
+        await mockService.setMockError(URLError(.badURL))
+        
+        // When/Then
+        do {
+            _ = try await mockService.fetchSongs(query: "test", limit: 20)
+            XCTFail("Should fail")
+        } catch {
+            // Test passes if we get here
+        }
+    }
+    
+    func test_fetchSongs_whenNetworkError_shouldFail() async {
+
+        // Given
+        let mockService = MockSongsService()
+        await mockService.setMockError(URLError(.networkConnectionLost))
+        
+        // When/Then
+        do {
+            _ = try await mockService.fetchSongs(query: "test", limit: 20)
+            XCTFail("Should fail")
+        } catch {
+            // Test passes if we get here
+        }
+    }
+    
+    func test_fetchSongs_whenMockResponse_shouldReturnMockData() async throws {
+
+        // Given
+        let mockService = MockSongsService()
+        let mockResponse = SongsResponse(resultCount: 1, results: [Song.mock])
+        await mockService.setMockResponse(mockResponse)
         
         // When
-        mockService.fetchSongs(query: "test", limit: 20)
-            .sink(receiveCompletion: { completion in
-                if case .failure = completion {
-                    expectation.fulfill()
-                }
-            }, receiveValue: { _ in
-                XCTFail("Should fail")
-            })
-            .store(in: &cancellables)
+        let response = try await mockService.fetchSongs(query: "test", limit: 20)
         
-        wait(for: [expectation], timeout: 5.0)
+        // Then
+        XCTAssertEqual(response.results.count, 1)
+        XCTAssertEqual(response.results.first?.trackName, Song.mock.trackName)
+    }
+    
+    func test_fetchSongs_whenDelay_shouldRespectDelay() async throws {
+
+        // Given
+        let mockService = MockSongsService()
+        let mockResponse = SongsResponse(resultCount: 10, results: [Song.mock])
+        await mockService.setMockResponse(mockResponse)
+        await mockService.setDelay(0.1) // 100ms delay
+        
+        let startTime = Date()
+        
+        // When
+        _ = try await mockService.fetchSongs(query: "test", limit: 20)
+        
+        // Then
+        let elapsedTime = Date().timeIntervalSince(startTime)
+        XCTAssertGreaterThanOrEqual(elapsedTime, 0.1, "Should respect the delay")
+    }
+    
+    func test_fetchSongs_whenCancelled_shouldNotComplete() async {
+
+        // Given
+        let query = "test"
+        let limit = 20
+        
+        // When/Then
+        let task = Task {
+            try await sut.fetchSongs(query: query, limit: limit)
+        }
+        
+        task.cancel()
+        
+        do {
+            _ = try await task.value
+            XCTFail("Should be cancelled")
+        } catch {
+            // Test passes if we get here (cancellation error)
+        }
     }
 }
-
-// MARK: - Mock Service
-private class MockSongsService: SongsServiceProtocol {
-    var shouldReturnInvalidURL = false
-    
-    func fetchSongs(query: String, limit: Int) -> AnyPublisher<SongsResponse, Error> {
-        if shouldReturnInvalidURL {
-            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
-        }
-        
-        var components = URLComponents(string: "https://itunes.apple.com/search")!
-        components.queryItems = [
-            URLQueryItem(name: "term", value: query.isEmpty ? "music" : query),
-            URLQueryItem(name: "media", value: "music"),
-            URLQueryItem(name: "entity", value: "song"),
-            URLQueryItem(name: "limit", value: String(limit)),
-        ]
-        
-        guard let url = components.url else {
-            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
-        }
-        
-        return URLSession.shared.dataTaskPublisher(for: url)
-            .map(\.data)
-            .decode(type: SongsResponse.self, decoder: JSONDecoder())
-            .eraseToAnyPublisher()
-    }
-} 

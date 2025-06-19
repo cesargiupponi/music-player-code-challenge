@@ -6,68 +6,82 @@
 //
 
 import XCTest
-import Combine
 @testable import MusicPlayer
 
 final class AlbumServiceTests: XCTestCase {
-
+    
     private var sut: AlbumService!
-    private var cancellables: Set<AnyCancellable>!
+    private let timeout: TimeInterval = 1.0
     
     override func setUp() {
         super.setUp()
         sut = AlbumService()
-        cancellables = []
     }
     
     override func tearDown() {
         sut = nil
-        cancellables = nil
         super.tearDown()
     }
     
-    func test_fetchAlbumSongs_whenValidCollectionId_shouldReturnResults() {
+    func test_fetchAlbumSongs_whenValidCollectionId_shouldReturnResults() async throws {
 
         // Given
-        let expectation = XCTestExpectation(description: "Fetch album songs")
         let collectionId = 576670451 // A valid iTunes collection ID
         
         // When
-        sut.fetchAlbumSongs(collectionId: collectionId)
-            .sink(receiveCompletion: { completion in
-                if case .failure = completion {
-                    XCTFail("Should not fail")
-                }
-            }, receiveValue: { response in
-                // Then
-                XCTAssertFalse(response.results.isEmpty)
-                XCTAssertTrue(response.results.contains { $0.wrapperType == "collection" })
-                XCTAssertTrue(response.results.contains { $0.wrapperType == "track" })
-                expectation.fulfill()
-            })
-            .store(in: &cancellables)
+        let response = try await sut.fetchAlbumSongs(collectionId: collectionId)
         
-        wait(for: [expectation], timeout: 5.0)
+        // Then
+        XCTAssertFalse(response.results.isEmpty)
+        XCTAssertTrue(response.results.contains { $0.wrapperType == "collection" })
+        XCTAssertTrue(response.results.contains { $0.wrapperType == "track" })
     }
     
-    func test_fetchAlbumSongs_whenInvalidCollectionId_shouldFail() {
+    func test_fetchAlbumSongs_whenInvalidCollectionId_shouldFail() async {
 
         // Given
-        let expectation = XCTestExpectation(description: "Fetch with invalid ID")
         let invalidCollectionId = -1
         
-        // When
-        sut.fetchAlbumSongs(collectionId: invalidCollectionId)
-            .sink(receiveCompletion: { completion in
-                if case .failure = completion {
-                    expectation.fulfill()
-                }
-            }, receiveValue: { _ in
-                // Then
-                XCTFail("Should fail")
-            })
-            .store(in: &cancellables)
+        // When/Then
+        do {
+            _ = try await sut.fetchAlbumSongs(collectionId: invalidCollectionId)
+            XCTFail("Should fail")
+        } catch {
+            // Test passes if we get here
+        }
+    }
+    
+    func test_fetchAlbumSongs_whenNetworkError_shouldFail() async {
+
+        // Given
+        let invalidCollectionId = -1 // Very unlikely to exist
         
-        wait(for: [expectation], timeout: 5.0)
+        // When/Then
+        do {
+            _ = try await sut.fetchAlbumSongs(collectionId: invalidCollectionId)
+            XCTFail("Should fail")
+        } catch {
+            // Test passes if we get here
+        }
+    }
+    
+    func test_fetchAlbumSongs_whenCancelled_shouldNotComplete() async {
+
+        // Given
+        let collectionId = 576670451
+        
+        // When/Then
+        let task = Task {
+            try await sut.fetchAlbumSongs(collectionId: collectionId)
+        }
+        
+        task.cancel()
+        
+        do {
+            _ = try await task.value
+            XCTFail("Should be cancelled")
+        } catch {
+            // Test passes if we get here (cancellation error)
+        }
     }
 } 

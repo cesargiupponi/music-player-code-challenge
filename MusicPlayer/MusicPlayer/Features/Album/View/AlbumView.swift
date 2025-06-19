@@ -52,6 +52,9 @@ struct AlbumView: View {
             }
             .listStyle(.plain)
         }
+        .task {
+            await viewModel.fetchAlbumSongs()
+        }
     }
 }
 

@@ -26,6 +26,7 @@ final class SongPlayerViewModelTests: XCTestCase {
     }
     
     func test_init_shouldSetInitialSong() {
+
         // Given
         let song = Song.mock
         
@@ -39,6 +40,7 @@ final class SongPlayerViewModelTests: XCTestCase {
     }
     
     func test_trackDuration_shouldReturnCorrectDuration() {
+
         // Given
         let expectedDuration = 12344
         
@@ -50,6 +52,7 @@ final class SongPlayerViewModelTests: XCTestCase {
     }
     
     func test_trackDuration_whenNil_shouldReturnZero() {
+
         // Given
         let song = Song(trackId: 1,
                        collectionId: 123,
@@ -66,6 +69,7 @@ final class SongPlayerViewModelTests: XCTestCase {
     }
     
     func test_song_whenUpdated_shouldPublishChanges() {
+
         // Given
         let expectation = XCTestExpectation(description: "Song updated")
         let newSong = Song(trackId: 2,

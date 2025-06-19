@@ -29,6 +29,7 @@ final class MoreOptionsViewModelTests: XCTestCase {
     
     @MainActor
     func test_init_shouldSetInitialSong() {
+
         // Given
         let song = SongBottomSheet.mock
         
@@ -43,6 +44,7 @@ final class MoreOptionsViewModelTests: XCTestCase {
     
     @MainActor
     func test_song_whenUpdated_shouldPublishChanges() {
+
         // Given
         let expectation = XCTestExpectation(description: "Song updated")
         let newSong = SongBottomSheet(

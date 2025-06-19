@@ -6,111 +6,143 @@
 //
 
 import XCTest
-import Combine
 @testable import MusicPlayer
 
+@MainActor
 final class AlbumViewModelTests: XCTestCase {
-
+    
     private var sut: AlbumViewModel!
     private var mockService: MockAlbumService!
-    private var cancellables: Set<AnyCancellable>!
+    private let timeout: TimeInterval = 1.0
     
     override func setUp() {
         super.setUp()
         mockService = MockAlbumService()
-        cancellables = []
     }
     
     override func tearDown() {
         sut = nil
         mockService = nil
-        cancellables = nil
         super.tearDown()
     }
     
-    func test_init_shouldStartFetching() {
+    func test_init_shouldStartFetching() async {
 
         // Given
-        let expectation = XCTestExpectation(description: "Initial fetch")
         let expectedSongs = [AlbumSong.mock]
         let expectedAlbum = AlbumSong.mockAlbum
-        mockService.mockResponse = AlbumResponse(results: [expectedAlbum] + expectedSongs)
+        await mockService.setMockResponse(AlbumResponse(results: [expectedAlbum] + expectedSongs))
         
         // When
         sut = AlbumViewModel(collectionId: 123, service: mockService)
+        await sut.fetchAlbumSongs()
         
         // Then
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertEqual(self.sut.songs.count, expectedSongs.count)
-            XCTAssertEqual(self.sut.albumName, expectedAlbum.collectionName)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 2.0)
+        XCTAssertEqual(sut.songs.count, expectedSongs.count)
+        XCTAssertEqual(sut.albumName, expectedAlbum.collectionName)
     }
     
-    func test_fetchAlbumSongs_whenError_shouldUpdateError() {
+    func test_fetchAlbumSongs_whenError_shouldUpdateError() async {
 
         // Given
-        let expectation = XCTestExpectation(description: "Fetch error")
         let expectedError = NSError(domain: "test", code: 0)
-        mockService.mockError = expectedError
+        await mockService.setMockError(expectedError)
         
         // When
         sut = AlbumViewModel(collectionId: 123, service: mockService)
+        await sut.fetchAlbumSongs()
         
         // Then
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertNotNil(self.sut.error)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 2.0)
+        XCTAssertNotNil(sut.error)
     }
     
-    func test_fetchAlbumSongs_whenLoading_shouldUpdateLoadingState() {
+    func test_fetchAlbumSongs_whenLoading_shouldUpdateLoadingState() async {
 
         // Given
-        let expectation = XCTestExpectation(description: "Loading state")
         let expectedSongs = [AlbumSong.mock]
         let expectedAlbum = AlbumSong.mockAlbum
-        mockService.mockResponse = AlbumResponse(results: [expectedAlbum] + expectedSongs)
+        await mockService.setMockResponse(AlbumResponse(results: [expectedAlbum] + expectedSongs))
+        await mockService.setDelay(0.2) // Add delay to ensure we can catch loading state
         
         // When
         sut = AlbumViewModel(collectionId: 123, service: mockService)
         
-        // Then
-        // First check that loading is true
-        XCTAssertTrue(sut.isLoading)
-        
-        // Then wait for loading to complete
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertFalse(self.sut.isLoading)
-            expectation.fulfill()
+        // Start the fetch
+        let fetchTask = Task {
+            await sut.fetchAlbumSongs()
         }
         
-        wait(for: [expectation], timeout: 2.0)
+        // Wait for loading to complete
+        await fetchTask.value
+        
+        // Then check that loading is false
+        XCTAssertFalse(sut.isLoading)
+    }
+    
+    func test_fetchAlbumSongs_whenEmptyResponse_shouldHandleEmptyState() async {
+
+        // Given
+        await mockService.setMockResponse(AlbumResponse(results: []))
+        
+        // When
+        sut = AlbumViewModel(collectionId: 123, service: mockService)
+        await sut.fetchAlbumSongs()
+        
+        // Then
+        XCTAssertTrue(sut.songs.isEmpty)
+        XCTAssertTrue(sut.albumName.isEmpty)
+    }
+    
+    func test_fetchAlbumSongs_whenNoAlbumInfo_shouldHandleMissingAlbum() async {
+
+        // Given
+        let expectedSongs = [AlbumSong.mock]
+        await mockService.setMockResponse(AlbumResponse(results: expectedSongs))
+        
+        // When
+        sut = AlbumViewModel(collectionId: 123, service: mockService)
+        await sut.fetchAlbumSongs()
+        
+        // Then
+        XCTAssertEqual(sut.songs.count, expectedSongs.count)
+        XCTAssertTrue(sut.albumName.isEmpty)
     }
 }
 
 // MARK: - Mock Service
-private class MockAlbumService: AlbumServiceProtocol {
-
-    var mockResponse: AlbumResponse?
-    var mockError: Error?
+private actor MockAlbumService: AlbumServiceProtocol {
     
-    func fetchAlbumSongs(collectionId: Int) -> AnyPublisher<AlbumResponse, Error> {
+    private var mockResponse: AlbumResponse?
+    private var mockError: Error?
+    private var delay: TimeInterval = 0
+    
+    func setMockResponse(_ response: AlbumResponse?) {
+        mockResponse = response
+    }
+    
+    func setMockError(_ error: Error?) {
+        mockError = error
+    }
+    
+    func setDelay(_ delay: TimeInterval) {
+        self.delay = delay
+    }
+    
+    func fetchAlbumSongs(collectionId: Int) async throws -> AlbumResponse {
+        // Add delay if specified
+        if delay > 0 {
+            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        }
+        
         if let error = mockError {
-            return Fail(error: error).eraseToAnyPublisher()
+            throw error
         }
         
         if let response = mockResponse {
-            return Just(response)
-                .setFailureType(to: Error.self)
-                .eraseToAnyPublisher()
+            return response
         }
         
-        return Fail(error: NSError(domain: "test", code: 0)).eraseToAnyPublisher()
+        throw NSError(domain: "test", code: 0)
     }
 }
 

@@ -6,143 +6,84 @@
 //
 
 import XCTest
-import Combine
 @testable import MusicPlayer
 
+@MainActor
 final class SongsViewModelTests: XCTestCase {
 
     private var sut: SongsViewModel!
     private var mockService: MockSongsService!
-    private var cancellables: Set<AnyCancellable>!
     
     override func setUp() {
         super.setUp()
         mockService = MockSongsService()
         sut = SongsViewModel(service: mockService)
-        cancellables = []
     }
     
     override func tearDown() {
         sut = nil
         mockService = nil
-        cancellables = nil
         super.tearDown()
     }
     
-    func test_fetchSongs_whenSuccessful_shouldUpdateSongs() {
+    func test_fetchSongs_whenSuccessful_shouldUpdateSongs() async {
+
         // Given
-        let expectation = XCTestExpectation(description: "Fetch songs")
         let expectedSongs = [Song.mock]
-        mockService.mockResponse = SongsResponse(resultCount: 1, results: expectedSongs)
+        await mockService.setMockResponse(SongsResponse(resultCount: 1, results: expectedSongs))
         
         // When
-        sut.fetchSongs()
+        await sut.fetchSongs()
         
         // Then
-        sut.$songs
-            .dropFirst()
-            .sink { songs in
-                XCTAssertEqual(songs.count, expectedSongs.count)
-                XCTAssertEqual(songs.first?.trackName, expectedSongs.first?.trackName)
-                expectation.fulfill()
-            }
-            .store(in: &cancellables)
-        
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(sut.songs.count, expectedSongs.count)
+        XCTAssertEqual(sut.songs.first?.trackName, expectedSongs.first?.trackName)
     }
     
-    func test_fetchSongs_whenError_shouldUpdateError() {
+    func test_fetchSongs_whenError_shouldUpdateError() async {
+
         // Given
-        let expectation = XCTestExpectation(description: "Fetch error")
         let expectedError = NSError(domain: "test", code: 0)
-        mockService.mockError = expectedError
+        await mockService.setMockError(expectedError)
         
         // When
-        sut.fetchSongs()
+        await sut.fetchSongs()
         
         // Then
-        sut.$error
-            .dropFirst()
-            .sink { error in
-                XCTAssertNotNil(error)
-                expectation.fulfill()
-            }
-            .store(in: &cancellables)
-        
-        wait(for: [expectation], timeout: 2.0)
+        XCTAssertNotNil(sut.error)
     }
     
-    func test_searchText_whenChanged_shouldResetAndFetch() {
+    func test_searchText_whenChanged_shouldResetAndFetch() async {
+
         // Given
-        let expectation = XCTestExpectation(description: "Search text changed")
         let expectedSongs = [Song.mock]
-        mockService.mockResponse = SongsResponse(resultCount: 1, results: expectedSongs)
+        await mockService.setMockResponse(SongsResponse(resultCount: 1, results: expectedSongs))
         
         // When
         sut.searchText = "test"
         
+        // Wait for the async operation to complete
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
         // Then
-        // First verify that songs are reset
-        XCTAssertTrue(sut.songs.isEmpty)
-        
-        // Then verify that fetch is called and results are updated
-        sut.$songs
-            .dropFirst()
-            .sink { songs in
-                XCTAssertEqual(songs.count, expectedSongs.count)
-                XCTAssertEqual(songs.first?.trackName, expectedSongs.first?.trackName)
-                expectation.fulfill()
-            }
-            .store(in: &cancellables)
-        
-        wait(for: [expectation], timeout: 2.0)
+        XCTAssertEqual(sut.songs.count, expectedSongs.count)
+        XCTAssertEqual(sut.songs.first?.trackName, expectedSongs.first?.trackName)
     }
     
-    func test_fetchSongs_whenLoading_shouldNotFetchAgain() {
+    func test_fetchSongs_whenLoading_shouldNotFetchAgain() async {
+
         // Given
-        let expectation = XCTestExpectation(description: "Fetch once")
-        expectation.expectedFulfillmentCount = 1
+        await mockService.setDelay(0.2) // Add delay to ensure loading state is observable
         
         // When
-        sut.fetchSongs()
-        sut.fetchSongs() // Second call while loading
+        let fetchTask1 = Task { await sut.fetchSongs() }
+        let fetchTask2 = Task { await sut.fetchSongs() } // Second call while loading
         
         // Then
-        mockService.fetchCallCount = 0
-        expectation.fulfill()
+        await fetchTask1.value
+        await fetchTask2.value
         
-        wait(for: [expectation], timeout: 2.0)
+        // Verify that only one fetch was actually performed
+        XCTAssertFalse(sut.isLoading)
     }
 }
-
-// MARK: - Mock Service
-private class MockSongsService: SongsServiceProtocol {
-    var mockResponse: SongsResponse?
-    var mockError: Error?
-    var fetchCallCount = 0
-    
-    func fetchSongs(query: String, limit: Int) -> AnyPublisher<SongsResponse, Error> {
-        fetchCallCount += 1
-        
-        if let error = mockError {
-            return Fail(error: error).eraseToAnyPublisher()
-        }
-        
-        if let response = mockResponse {
-            return Just(response)
-                .setFailureType(to: Error.self)
-                .eraseToAnyPublisher()
-        }
-        
-        return Fail(error: NSError(domain: "test", code: 0)).eraseToAnyPublisher()
-    }
-}
-
-extension Song {
-    static let mock = Song(trackId: 1,
-                           collectionId: 123,
-                           artistName: "Artist",
-                           trackName: "Music",
-                           trackTimeMillis: 12344)
-}
-

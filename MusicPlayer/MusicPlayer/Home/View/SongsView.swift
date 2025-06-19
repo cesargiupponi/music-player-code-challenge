@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Combine
 
 struct SongsView: View {
 
@@ -23,7 +22,7 @@ struct SongsView: View {
 
                 VStack(alignment: .leading, spacing: 20) {
                     List {
-                        ForEach(viewModel.songs.indices, id: \ .self) { index in
+                        ForEach(viewModel.songs.indices, id: \.self) { index in
                             let song = viewModel.songs[index]
                             NavigationLink(destination: SongPlayerView(song: song)) {
                                 HStack(spacing: 16) {
@@ -47,7 +46,9 @@ struct SongsView: View {
                             .listRowBackground(Color.black)
                             .onAppear {
                                 if index == viewModel.songs.count - 1 {
-                                    viewModel.fetchSongs()
+                                    Task {
+                                        await viewModel.fetchSongs()
+                                    }
                                 }
                             }
                         }
@@ -60,10 +61,8 @@ struct SongsView: View {
                         .tint(Color.white)
                 }
             }
-            .onAppear {
-                if searchText.isEmpty {
-                    viewModel.fetchSongs()
-                }
+            .task {
+                await viewModel.fetchSongs()
             }
             .listStyle(.plain)
             .navigationTitle(Text("Songs"))
@@ -73,7 +72,6 @@ struct SongsView: View {
                         prompt: "Search")
             .onSubmit(of: .search) {
                 viewModel.searchText = searchText
-                viewModel.fetchSongs()
             }
         }
     }

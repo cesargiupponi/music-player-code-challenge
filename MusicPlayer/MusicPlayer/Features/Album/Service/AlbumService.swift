@@ -6,20 +6,22 @@
 //
 
 import Foundation
-import Combine
 
-protocol AlbumServiceProtocol {
-    func fetchAlbumSongs(collectionId: Int) -> AnyPublisher<AlbumResponse, Error>
+protocol AlbumServiceProtocol: Sendable {
+    func fetchAlbumSongs(collectionId: Int) async throws -> AlbumResponse
 }
 
 final class AlbumService: AlbumServiceProtocol {
-
-    func fetchAlbumSongs(collectionId: Int) -> AnyPublisher<AlbumResponse, Error> {
-
+    func fetchAlbumSongs(collectionId: Int) async throws -> AlbumResponse {
         let url = URL(string: "https://itunes.apple.com/lookup?id=\(collectionId)&entity=song")!
-        return URLSession.shared.dataTaskPublisher(for: url)
-            .map(\ .data)
-            .decode(type: AlbumResponse.self, decoder: JSONDecoder())
-            .eraseToAnyPublisher()
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return try JSONDecoder().decode(AlbumResponse.self, from: data)
     }
 } 
