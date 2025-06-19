@@ -1,6 +1,3 @@
-BACKUP
-
-
 # Music Player App
 
 A modern iOS music player application built with SwiftUI and MVVM architecture, featuring a sleek dark theme and integration with the iTunes Search API.
