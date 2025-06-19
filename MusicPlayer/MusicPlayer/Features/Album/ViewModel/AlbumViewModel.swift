@@ -10,8 +10,7 @@ import Foundation
 @MainActor
 final class AlbumViewModel: ObservableObject {
     @Published private(set) var songs: [AlbumSong] = []
-    @Published private(set) var isLoading: Bool = false
-    @Published private(set) var error: Error?
+    @Published private(set) var state: MusicPlayerViewState = .idle
     @Published var albumName: String = ""
 
     private let service: AlbumServiceProtocol
@@ -23,8 +22,7 @@ final class AlbumViewModel: ObservableObject {
     }
 
     func fetchAlbumSongs() async {
-        isLoading = true
-        error = nil
+        state = .loading
         
         do {
             let response = try await service.fetchAlbumSongs(collectionId: collectionId)
@@ -34,10 +32,14 @@ final class AlbumViewModel: ObservableObject {
                 albumName = album.collectionName ?? ""
             }
             songs = response.results.filter { $0.wrapperType == "track" }
+            state = .loaded
         } catch {
-            self.error = error
+            state = .error(error)
         }
-        
-        isLoading = false
+    }
+    
+    func retry() async {
+        state = .idle
+        await fetchAlbumSongs()
     }
 } 
