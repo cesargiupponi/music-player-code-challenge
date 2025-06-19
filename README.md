@@ -26,6 +26,28 @@ A modern iOS music player application built with SwiftUI and MVVM architecture, 
 - **Unit Testing**: Comprehensive test coverage for ViewModels and Services
 - **Mock Services**: Testable architecture with mock implementations
 
+## 📱 Screenshots
+
+### Main Screens
+
+<img height="600" src="https://github.com/user-attachments/assets/d6a4eb82-85d3-49e7-b93d-d1c398cbee49">
+
+<img height="600" src="https://github.com/user-attachments/assets/ab276257-db2e-4713-80e6-045c4c58f831">
+
+<img height="600" src="https://github.com/user-attachments/assets/44e68c55-f512-4f07-9c76-b0b904b4ac30">
+
+<img height="600" src="https://github.com/user-attachments/assets/81cfa5fb-2a49-4e13-a4f9-b49c915dcea6">
+
+<img height="600" src="https://github.com/user-attachments/assets/58c15ed2-510c-4d93-b02a-bafcb4792436">
+
+
+
+
+### UI Components
+<img height="600" src="https://github.com/user-attachments/assets/bfe9c950-2adb-4a67-8995-c66499db3e75">
+
+<img height="600" src="https://github.com/user-attachments/assets/b88146ea-7cf6-4f5f-8790-3d6bbe4832c6">
+
 ## 🏗️ Architecture
 
 ### Project Structure
