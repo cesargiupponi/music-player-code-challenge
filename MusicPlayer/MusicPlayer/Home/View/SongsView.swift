@@ -53,6 +53,9 @@ struct SongsView: View {
                             }
                         }
                     }
+                    .refreshable {
+                        viewModel.searchText = ""
+                    }
                 }
 
                 if viewModel.isLoading {
