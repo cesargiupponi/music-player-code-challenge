@@ -18,8 +18,11 @@ struct SongPlayerView: View {
 
     @StateObject private var viewModel: SongPlayerViewModel
 
-    init(song: Song) {
-        _viewModel = StateObject(wrappedValue: SongPlayerViewModel(song: song))
+    var playlist: [Song]
+
+    init(song: Song, playlist: [Song]) {
+        self.playlist = playlist
+        _viewModel = StateObject(wrappedValue: SongPlayerViewModel(song: song, playlist: playlist))
     }
 
     var body: some View {
@@ -72,9 +75,9 @@ struct SongPlayerView: View {
                 .padding(.bottom, 12)
 
                 VStack {
-                    SmallThumbSlider(value: $progress, range: 0...200)
+                    SmallThumbSlider(value: $progress, range: 0...Double(viewModel.trackDuration))
                     HStack {
-                        Text("0:00")
+                        Text("\(Int(progress).convertToTime())")
                             .font(.caption)
                             .foregroundStyle(Color.white)
                         Spacer()
@@ -86,7 +89,9 @@ struct SongPlayerView: View {
                 .padding(.horizontal, 20)
 
                 HStack(spacing: 40) {
-                    Button(action: {}) {
+                    Button(action: {
+                        viewModel.previous()
+                    }) {
                         Image(.backward)
                             .font(.title)
                             .foregroundStyle(Color.white)
@@ -101,8 +106,9 @@ struct SongPlayerView: View {
                                 .foregroundStyle(Color.black)
                         }
                     }
+                    
                     Button(action: {
-
+                        viewModel.next()
                     }) {
                         Image(.forward)
                             .font(.title)
@@ -113,6 +119,9 @@ struct SongPlayerView: View {
             }
         }
         .navigationBarBackButtonHidden()
+        .onAppear {
+            viewModel.setupPlaylist()
+        }
         .sheet(isPresented: $isShowingBottomSheet) {
             let songBottomSheet = SongBottomSheet(title: viewModel.song.trackName,
                                                   artist: viewModel.song.artistName,
@@ -173,6 +182,7 @@ struct SmallThumbSlider: View {
                               collectionId: 1234,
                               artistName: "Artist",
                               trackName: "Track",
-                              trackTimeMillis: 120)
+                              trackTimeMillis: 120000),
+                    playlist: []
     )
 }

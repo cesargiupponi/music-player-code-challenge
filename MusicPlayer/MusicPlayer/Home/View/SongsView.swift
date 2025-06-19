@@ -62,7 +62,7 @@ struct SongsView: View {
         List {
             ForEach(viewModel.songs.indices, id: \.self) { index in
                 let song = viewModel.songs[index]
-                NavigationLink(destination: SongPlayerView(song: song)) {
+                NavigationLink(destination: SongPlayerView(song: song, playlist: viewModel.songs)) {
                     HStack(spacing: 16) {
                         ZStack {
                             Image(.songIconSmall)

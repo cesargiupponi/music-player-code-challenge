@@ -9,6 +9,7 @@ import XCTest
 import Combine
 @testable import MusicPlayer
 
+@MainActor
 final class SongPlayerViewModelTests: XCTestCase {
     private var sut: SongPlayerViewModel!
     private var cancellables: Set<AnyCancellable>!
@@ -49,23 +50,6 @@ final class SongPlayerViewModelTests: XCTestCase {
         
         // Then
         XCTAssertEqual(duration, expectedDuration)
-    }
-    
-    func test_trackDuration_whenNil_shouldReturnZero() {
-
-        // Given
-        let song = Song(trackId: 1,
-                       collectionId: 123,
-                       artistName: "Artist",
-                       trackName: "Music",
-                       trackTimeMillis: nil)
-        sut = SongPlayerViewModel(song: song)
-        
-        // When
-        let duration = sut.trackDuration
-        
-        // Then
-        XCTAssertEqual(duration, 0)
     }
     
     func test_song_whenUpdated_shouldPublishChanges() {

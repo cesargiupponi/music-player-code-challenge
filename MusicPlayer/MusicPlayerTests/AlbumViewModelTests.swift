@@ -53,7 +53,7 @@ final class AlbumViewModelTests: XCTestCase {
         await sut.fetchAlbumSongs()
         
         // Then
-        XCTAssertNotNil(sut.error)
+        XCTAssertEqual(sut.state, .error(expectedError))
     }
     
     func test_fetchAlbumSongs_whenLoading_shouldUpdateLoadingState() async {
@@ -75,8 +75,8 @@ final class AlbumViewModelTests: XCTestCase {
         // Wait for loading to complete
         await fetchTask.value
         
-        // Then check that loading is false
-        XCTAssertFalse(sut.isLoading)
+        // Then check that state is loaded
+        XCTAssertEqual(sut.state, .loaded)
     }
     
     func test_fetchAlbumSongs_whenEmptyResponse_shouldHandleEmptyState() async {
@@ -91,6 +91,7 @@ final class AlbumViewModelTests: XCTestCase {
         // Then
         XCTAssertTrue(sut.songs.isEmpty)
         XCTAssertTrue(sut.albumName.isEmpty)
+        XCTAssertEqual(sut.state, .loaded)
     }
     
     func test_fetchAlbumSongs_whenNoAlbumInfo_shouldHandleMissingAlbum() async {
@@ -106,6 +107,23 @@ final class AlbumViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(sut.songs.count, expectedSongs.count)
         XCTAssertTrue(sut.albumName.isEmpty)
+        XCTAssertEqual(sut.state, .loaded)
+    }
+    
+    func test_retry_shouldResetStateAndRefetch() async {
+        // Given
+        let expectedSongs = [AlbumSong.mock]
+        let expectedAlbum = AlbumSong.mockAlbum
+        await mockService.setMockResponse(AlbumResponse(results: [expectedAlbum] + expectedSongs))
+        
+        // When
+        sut = AlbumViewModel(collectionId: 123, service: mockService)
+        await sut.retry()
+        
+        // Then
+        XCTAssertEqual(sut.songs.count, expectedSongs.count)
+        XCTAssertEqual(sut.albumName, expectedAlbum.collectionName)
+        XCTAssertEqual(sut.state, .loaded)
     }
 }
 
@@ -163,4 +181,20 @@ extension AlbumSong {
         artistName: "Test Artist",
         trackId: nil
     )
-} 
+}
+
+extension MusicPlayerViewState: @retroactive Equatable {
+    public static func == (lhs: MusicPlayerViewState, rhs: MusicPlayerViewState) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle),
+             (.loading, .loading),
+             (.loaded, .loaded),
+             (.empty, .empty):
+            return true
+        case (.error(let lhsError), .error(let rhsError)):
+            return lhsError.localizedDescription == rhsError.localizedDescription
+        default:
+            return false
+        }
+    }
+}
